@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${DOCKER_USER:-local}/docker-project-backend:${IMAGE_TAG:-latest}
+    ports:
+      - "8081:8081"
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+    networks:
+      - app-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VUE_APP_API_URL: ${VUE_APP_API_URL:-http://localhost:8081}
+    image: ${DOCKER_USER:-local}/docker-project-frontend:${IMAGE_TAG:-latest}
+    depends_on:
+      - backend
+    ports:
+      - "80:8080"
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
