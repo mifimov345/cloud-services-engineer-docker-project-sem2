@@ -1,4 +1,4 @@
-FROM node:16-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /src
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 
 COPY --from=builder /src/dist /usr/share/nginx/html
 COPY --from=builder /src/dist /usr/share/nginx/html/momo-store
