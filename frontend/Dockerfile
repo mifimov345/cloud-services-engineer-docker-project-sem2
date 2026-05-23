@@ -15,6 +15,7 @@ RUN npm run build
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 
 COPY --from=builder /src/dist /usr/share/nginx/html
+COPY --from=builder /src/dist /usr/share/nginx/html/momo-store
 
 USER 101
 

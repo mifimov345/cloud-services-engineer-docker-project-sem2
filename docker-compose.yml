@@ -4,12 +4,36 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: ${DOCKER_USER:-local}/docker-project-backend:${IMAGE_TAG:-latest}
+    container_name: momo-backend
+    restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
       APP_ENV: ${APP_ENV:-production}
     networks:
-      - app-net
+      - backend-net
+      - frontend-net
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8081/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
 
   frontend:
     build:
@@ -18,13 +42,42 @@ services:
       args:
         VUE_APP_API_URL: ${VUE_APP_API_URL:-http://localhost:8081}
     image: ${DOCKER_USER:-local}/docker-project-frontend:${IMAGE_TAG:-latest}
+    container_name: momo-frontend
+    restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "80:8080"
     networks:
-      - app-net
+      - frontend-net
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
 
 networks:
-  app-net:
-    driver: bridge 
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+    internal: true
